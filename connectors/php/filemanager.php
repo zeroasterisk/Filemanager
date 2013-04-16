@@ -6,6 +6,7 @@
  *	Filemanager PHP connector
  *
  *	filemanager.php
+ *
  *	use for ckeditor filemanager plug-in by Core Five - http://labs.corefive.com/Projects/FileManager/
  *
  *	@license	MIT License
@@ -16,125 +17,48 @@
 
 require_once('./inc/filemanager.inc.php');
 require_once('filemanager.class.php');
+require_once('./engines/filemanager.engine.php');
 
+class MyFilemanager extends Filemanager {
 
-/**
- *	Check if user is authorized
- *
- *	@return boolean true is access granted, false if no access
- */
-function auth() {
-  // You can insert your own code over here to check if the user is authorized.
-  // If you use a session variable, you've got to start the session first (session_start())
-  return true;
+	/**
+	 * configuration here
+	 * note: we initially parse the ../../../config.js for configuration,
+	 * so you don't have to explicitly setup here
+	 */
+	public $config = array(
+		'engine' => 'filesystem',
+		//'engine' => 'rsc',
+		'engineConfig' => array(
+			'user' => 'a',
+		),
+	);
+
+	/**
+	 * Check if user is authorized
+	 *
+	 * @return boolean true is access granted, false if no access
+	 */
+	public function auth() {
+		// You can insert your own code over here to check if the user is authorized.
+		// If you use a session variable, you've got to start the session first (session_start())
+		return true;
+	}
+
+	/**
+	 * Render the response (as a JSON string)
+	 * get the responseArray from the parent class
+	 *
+	 * @return string $responseString;
+	 */
+	public function response() {
+		$responseArray = parent::response();
+		return json_encode($responseArray);
+	}
 }
 
-
-// @todo Work on plugins registration
-// if (isset($config['plugin']) && !empty($config['plugin'])) {
-// 	$pluginPath = 'plugins' . DIRECTORY_SEPARATOR . $config['plugin'] . DIRECTORY_SEPARATOR;
-// 	require_once($pluginPath . 'filemanager.' . $config['plugin'] . '.config.php');
-// 	require_once($pluginPath . 'filemanager.' . $config['plugin'] . '.class.php');
-// 	$className = 'Filemanager'.strtoupper($config['plugin']);
-// 	$fm = new $className($config);
-// } else {
-// 	$fm = new Filemanager($config);
-// }
-
-$fm = new Filemanager();
-
-$response = '';
-
-if(!auth()) {
-  $fm->error($fm->lang('AUTHORIZATION_REQUIRED'));
-}
-
-if(!isset($_GET)) {
-  $fm->error($fm->lang('INVALID_ACTION'));
-} else {
-
-  if(isset($_GET['mode']) && $_GET['mode']!='') {
-
-    switch($_GET['mode']) {
-      	
-      default:
-
-        $fm->error($fm->lang('MODE_ERROR'));
-        break;
-
-      case 'getinfo':
-
-        if($fm->getvar('path')) {
-          $response = $fm->getinfo();
-        }
-        break;
-
-      case 'getfolder':
-        	
-        if($fm->getvar('path')) {
-          $response = $fm->getfolder();
-        }
-        break;
-
-      case 'rename':
-
-        if($fm->getvar('old') && $fm->getvar('new')) {
-          $response = $fm->rename();
-        }
-        break;
-
-      case 'delete':
-
-        if($fm->getvar('path')) {
-          $response = $fm->delete();
-        }
-        break;
-
-      case 'addfolder':
-
-        if($fm->getvar('path') && $fm->getvar('name')) {
-          $response = $fm->addfolder();
-        }
-        break;
-
-      case 'download':
-        if($fm->getvar('path')) {
-          $fm->download();
-        }
-        break;
-        
-      case 'preview':
-        if($fm->getvar('path')) {
-          $fm->preview();
-        }
-        break;
-			
-      case 'maxuploadfilesize':
-        $fm->getMaxUploadFileSize();
-        break;
-    }
-
-  } else if(isset($_POST['mode']) && $_POST['mode']!='') {
-
-    switch($_POST['mode']) {
-      	
-      default:
-
-        $fm->error($fm->lang('MODE_ERROR'));
-        break;
-        	
-      case 'add':
-
-        if($fm->postvar('currentpath')) {
-          $fm->add();
-        }
-        break;
-
-    }
-
-  }
-}
-
-echo json_encode($response);
+// now just initialize and render
+$fm = new MyFilemanager();
+echo $fm->response();
 die();
-?>
+
